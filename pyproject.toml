@@ -1,0 +1,26 @@
+[project]
+name = "advanced-machine-learning"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipykernel>=7.2.0",
+    "matplotlib>=3.10.8",
+    "optuna-dashboard>=0.20.0",
+    "tensorboard>=2.20.0",
+    # Windows
+    "torch==2.10.0; sys_platform == 'win32'",
+    "torchvision==0.25.0; sys_platform == 'win32'",
+    "torchaudio==2.10.0; sys_platform == 'win32'",
+    # macOS Apple Silicon (arm64)
+    "torch==2.10.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "torchvision==0.25.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "torchaudio==2.10.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
+    # macOS Intel (x86_64)
+    "torch==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "torchvision==0.17.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "torchaudio==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "numpy<2",
+]
+
