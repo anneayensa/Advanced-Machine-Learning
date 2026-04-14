@@ -26,9 +26,14 @@ from sklearn.ensemble import StackingClassifier
 #---- Loading Data ----- 
 df = pd.read_csv("csv/cs-training.csv")
 df.head(5)
+
+# Drop the default index column as it provides no predictive value
 df = df.drop(columns=["Unnamed: 0"])
+
 df.shape
 df.columns
+
+# Analyze the count and percentage of null values per column.
 df.isnull().sum()
 
 #We analyze how much those Nan represent.
@@ -49,6 +54,7 @@ df["SeriousDlqin2yrs"].value_counts().plot(kind="bar")
 X = df.drop("SeriousDlqin2yrs", axis=1)
 y = df["SeriousDlqin2yrs"]
 
+# 80/20 split. The 'stratify=y' parameter is CRUCIAL here to ensure the same proportion of defaulters (class 1) is maintained in Train and Test
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
@@ -66,8 +72,7 @@ baseline_model = LogisticRegression(max_iter=1000, random_state=42)
 
 baseline_model.fit(X_train, y_train)
 
-# Predictions
-y_pred_baseline = baseline_model.predict(X_test)
+# This makes predictions and calculates the ROC-AUC score
 y_proba_baseline = baseline_model.predict_proba(X_test)[:, 1]
 
 print("=== BASELINE MODEL ===")
@@ -314,10 +319,10 @@ bagging_model = BaggingClassifier(
 )
 
 
-bagging_model.fit(X_train_imputed, y_train)   #NUEVA LINEA: entrenamos el modelo con los datos imputados y tratados de outliers, porque el modelo no puede manejar valores faltantes ni outliers extremos.
+bagging_model.fit(X_train_imputed, y_train)   #new line: we train the model with the imputed and outlier-treated data, because the model cannot handle missing values or extreme outliers.
 
-y_pred_bag = bagging_model.predict(X_test_imputed) #NUEVA LINEA: hacemos predicciones con el modelo entrenado usando los datos de test que también han sido imputados y tratados de outliers.
-y_proba_bag = bagging_model.predict_proba(X_test_imputed)[:, 1] #NUEVA LINEA: obtenemos las probabilidades de la clase positiva (default) para calcular el ROC-AUC.
+y_pred_bag = bagging_model.predict(X_test_imputed) #new line: we make predictions with the trained model using the test data that has also been imputed and treated for outliers.
+y_proba_bag = bagging_model.predict_proba(X_test_imputed)[:, 1] #new line: we get the probabilities of the positive class (default) to calculate the ROC-AUC.
 
 print("=== BAGGING CLASSIFIER ===")
 print(classification_report(y_test, y_pred_bag))
@@ -336,10 +341,10 @@ adaboost_model = AdaBoostClassifier(
     random_state=42
 )
 
-adaboost_model.fit(X_train_imputed, y_train) #NUEVA LINEA: entrenamos el modelo con los datos imputados y tratados de outliers, porque el modelo no puede manejar valores faltantes ni outliers extremos.
+adaboost_model.fit(X_train_imputed, y_train)   #new line: we train the model with the imputed and outlier-treated data, because the model cannot handle missing values or extreme outliers.
 
-y_pred_ada = adaboost_model.predict(X_test_imputed)    #NUEVA LINEA: hacemos predicciones con el modelo entrenado usando los datos de test que también han sido imputados y tratados de outliers.
-y_proba_ada = adaboost_model.predict_proba(X_test_imputed)[:, 1] #NUEVA LINEA: obtenemos las probabilidades de la clase positiva (default) para calcular el ROC-AUC.
+y_pred_ada = adaboost_model.predict(X_test_imputed)    #new line: we make predictions with the trained model using the test data that has also been imputed and treated for outliers.
+y_proba_ada = adaboost_model.predict_proba(X_test_imputed)[:, 1] #new line: we get the probabilities of the positive class (default) to calculate the ROC-AUC.
 
 print("=== ADABOOST CLASSIFIER ===")
 print(classification_report(y_test, y_pred_ada))
@@ -377,7 +382,7 @@ comparison_ensemble
 # --- Optimization of Hyperparameters with Optuna ---
 
 def objective(trial):
-    # Definimos el espacio de búsqueda según la Unidad 2
+    #define the hyperparameters to optimize
     n_estimators = trial.suggest_int('n_estimators', 50, 300)
     learning_rate = trial.suggest_float('learning_rate', 0.01, 0.5, log=True)
     max_depth = trial.suggest_int('max_depth', 1, 5)
@@ -389,7 +394,7 @@ def objective(trial):
         random_state=42
     )
     
-    # Optimizamos ROC-AUC (mejor para imbalanced data, Unit 3)
+    #Optimize using cross-validation on the training set to get a more robust estimate of performance
     score = cross_val_score(model, X_train_imputed, y_train, cv=3, scoring='roc_auc').mean()
     return score
 
@@ -399,7 +404,7 @@ study.optimize(objective, n_trials=20)
 
 print(f"\Best parameters founded: {study.best_params}")
 
-# Entrenamos el modelo final optimizado
+# We train a final AdaBoost model using the best hyperparameters found by Optuna
 best_p = study.best_params
 final_ada_model = AdaBoostClassifier(
     estimator=DecisionTreeClassifier(max_depth=best_p['max_depth'], random_state=42),
@@ -409,7 +414,7 @@ final_ada_model = AdaBoostClassifier(
 )
 final_ada_model.fit(X_train_imputed, y_train)
 
-# Evaluación del modelo optimizado
+# Evaluate the optimized model on the test set
 y_proba_opt = final_ada_model.predict_proba(X_test_imputed)[:, 1]
 print(f"\nROC-AUC Final with Optuna: {roc_auc_score(y_test, y_proba_opt):.4f}")
 
