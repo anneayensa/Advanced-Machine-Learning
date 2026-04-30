@@ -22,5 +22,11 @@ dependencies = [
     "torchvision==0.17.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     "torchaudio==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     "numpy<2",
+    "jupyter>=1.1.1",
+    "statsmodels>=0.14.6",
+    "seaborn>=0.13.2",
+    "pandas>=2.3.3",
+    "scikit-learn>=1.8.0",
+    "notebook>=7.5.6",
 ]
 
